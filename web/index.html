@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+
+  <!--  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">-->
+  <!--  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">-->
+  <!--  <script src="css/iconfont.css"></script>-->
+  <!--  <script src="js/iconfont.js"></script>-->
+  <!--  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>-->
+  <!--  <script src="https://cdn.jsdelivr.net/npm/vue-router@2.0.0/dist/vue-router.js"></script>-->
+  <!--  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>-->
+
+  <link href="css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="css/vuetify.min.css" rel="stylesheet">
+  <link href="css/iconfont.css" rel="stylesheet">
+  <script src="js/vue.js"></script>
+  <script src="js/vue-router.js"></script>
+  <script src="js/vuetify.js"></script>
+  <script src="js/iconfont.js"></script>
+  <style>
+      .type-icon {
+          width: 1em;
+          height: 1em;
+          vertical-align: -0.15em;
+          fill: currentColor;
+          overflow: hidden;
+      }
+
+      .full-screen {
+          position: fixed;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          height: 100%;
+          width: 100%;
+      }
+
+      .full-father {
+          height: 100%;
+          width: 100%;
+      }
+  </style>
+</head>
+<body>
+<div id="app">
+  <v-app id="inspire">
+    <v-app id="inspire">
+      <v-navigation-drawer v-model="drawer" app clipped>
+        <v-list dense>
+          <v-subheader inset>{{i18n.settingUserGroup || 'User Setting'}}</v-subheader>
+          <v-list-item link :to="{name:'file',query:{path:'/'}}">
+            <v-list-item-action>
+              <v-icon>mdi-folder</v-icon>
+            </v-list-item-action>
+            <v-list-item-content>
+              <v-list-item-title>{{i18n.settingFile || 'File Manager'}}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item link :to="{name:'share'}">
+            <v-list-item-action>
+              <v-icon>mdi-share-variant</v-icon>
+            </v-list-item-action>
+            <v-list-item-content>
+              <v-list-item-title>{{i18n.settingShare || 'Share Manager'}}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item link :to="{name:'setting'}">
+            <v-list-item-action>
+              <v-icon>mdi-account</v-icon>
+            </v-list-item-action>
+            <v-list-item-content>
+              <v-list-item-title>{{i18n.settingPersonal || 'Personal Setting'}}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-subheader inset>{{i18n.settingSystemGroup || 'System Setting'}}</v-subheader>
+          <v-list-item link :to="{name:'user'}">
+            <v-list-item-action>
+              <v-icon>mdi-account-supervisor</v-icon>
+            </v-list-item-action>
+            <v-list-item-content>
+              <v-list-item-title>{{i18n.settingUsers || 'Users Manager'}}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item link :to="{name:'system'}">
+            <v-list-item-action>
+              <v-icon>mdi-cog</v-icon>
+            </v-list-item-action>
+            <v-list-item-content>
+              <v-list-item-title>{{i18n.settingSystem || 'System Setting'}}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item link>
+            <v-list-item-action>
+              <v-icon>mdi-logout-variant</v-icon>
+            </v-list-item-action>
+            <v-list-item-content>
+              <v-list-item-title>{{i18n.logoutList || 'Logout'}}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-navigation-drawer>
+      <v-app-bar app color="teal" dark clipped-left>
+        <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+        <v-toolbar-title>ZeroNas</v-toolbar-title>
+        <v-divider class="mx-4" inset vertical></v-divider>
+        <span class="subheading">Hello Guys.</span>
+        <v-spacer></v-spacer>
+        <v-toolbar-items class="hidden-sm-and-down">
+          <v-btn text :to="{name:'file',query:{path:'/'}}"> 文件管理</v-btn>
+          <v-divider inset vertical></v-divider>
+          <v-btn text :to="{name:'setting'}"> 个人设置</v-btn>
+          <v-divider inset vertical></v-divider>
+          <v-btn text :to="{name:'user'}"> 用户设置</v-btn>
+          <v-divider inset vertical></v-divider>
+          <v-btn text :to="{name:'system'}"> 系统设置</v-btn>
+          <v-divider inset vertical></v-divider>
+        </v-toolbar-items>
+        <v-toolbar-items class="hidden-md-and-up ">
+          <v-menu offset-y>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon v-bind="attrs" v-on="on">
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
+            </template>
+            <v-list>
+              <v-list-item :to="{name:'file',query:{path:'/'}}">
+                <v-list-item-title> 文件管理</v-list-item-title>
+              </v-list-item>
+              <v-list-item :to="{name:'setting'}">
+                <v-list-item-title> 个人设置</v-list-item-title>
+              </v-list-item>
+              <v-list-item :to="{name:'user'}">
+                <v-list-item-title> 用户设置</v-list-item-title>
+              </v-list-item>
+              <v-list-item :to="{name:'system'}">
+                <v-list-item-title> 系统设置</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </v-toolbar-items>
+      </v-app-bar>
+      <v-main>
+        <v-container class="fill-height" fluid>
+          <!-- 路由出口 -->
+          <!-- 路由匹配到的组件将渲染在这里 -->
+          <router-view></router-view>
+        </v-container>
+      </v-main>
+      <v-footer color="indigo" app>
+        <span class="white--text">&copy; 2021 by WShon.com</span>
+      </v-footer>
+    </v-app>
+    <v-overlay :value="loginShow">
+      <v-container class="full-screen fill-height" fluid>
+        <v-row align="center" justify="center">
+          <v-col cols="12" sm="8" md="4">
+            <v-card class="elevation-12">
+              <v-toolbar color="primary" dark flat>
+                <v-toolbar-title>{{ i18n.loginTitle || 'Login' }}</v-toolbar-title>
+                <v-spacer></v-spacer>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-btn @click="loginShow = false" icon large v-on="on">
+                      <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>{{i18n.loginClose || 'Close'}}</span>
+                </v-tooltip>
+              </v-toolbar>
+              <v-card-text>
+                <v-form>
+                  <v-text-field
+                      :label="i18n.loginUsername||'Login'"
+                      name="login"
+                      prepend-icon="mdi-account"
+                      type="text">
+                  </v-text-field>
+                  <v-text-field
+                      id="password"
+                      :label="i18n.loginPassword||'Password'"
+                      name="password"
+                      prepend-icon="mdi-lock"
+                      type="password">
+                  </v-text-field>
+                </v-form>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" @click="onBtnLoginClick">{{i18n.loginButton || 'Login'}}</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-overlay>
+  </v-app>
+</div>
+<template id="fileView">
+  <div class="elevation-3 full-father" ondragstart="return false">
+    <v-toolbar dense flat color="grey lighten-5">
+      <v-btn class="ma-2" text icon color="blue lighten-2" v-on:click="goUpLevel()">
+        <v-icon>mdi-arrow-up</v-icon>
+      </v-btn>
+      <v-divider inset vertical></v-divider>
+      <v-breadcrumbs :items="pathList"></v-breadcrumbs>
+    </v-toolbar>
+    <v-divider></v-divider>
+    <v-skeleton-loader
+        class="mx-auto"
+        :loading="loading"
+        transition="v-fade-transition"
+        type="table"
+    >
+      <v-data-table
+          id="fileTable"
+          :headers="tableHeader"
+          :items="tableData"
+          item-key="name"
+          hide-default-footer
+      >
+        <template v-slot:item.name="{ item }" v-on:click="itemAction(item)">
+          <svg class="type-icon" aria-hidden="true">
+            <use :xlink:href="'#type-'+getType(item.type)"></use>
+          </svg>
+          <a style="margin-left: 10px" v-on:click="itemAction(item)"> {{ item.name }}</a>
+        </template>
+      </v-data-table>
+    </v-skeleton-loader>
+    <v-overlay id="uploadFrame" :value="overlay">
+      <v-btn icon @click="overlay = false">
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
+    </v-overlay>
+  </div>
+</template>
+<template id="shareView">
+</template>
+<template id="userView">
+  <div class="elevation-3 full-father">
+    <v-data-table
+        :headers="tableHeader"
+        :items="tableData"
+        item-key="name"
+        hide-default-footer
+    >
+    </v-data-table>
+  </div>
+</template>
+<template id="settingView">
+</template>
+<template id="systemView">
+</template>
+<script>
+    window.onload = function () {
+        languages = {
+            'en': {
+                loginTitle: 'Login',
+                loginUsername: 'UserName',
+                loginPassword: 'Password',
+                loginButton: 'Login',
+                loginClose: 'Close',
+                logoutList: 'Logout',
+                settingUserGroup: 'User Setting',
+                settingFile: 'File Manager',
+                settingShare: 'Share Manager',
+                settingPersonal: 'Personal Setting',
+                settingSystemGroup: 'System Setting',
+                settingUsers: 'Users Manager',
+                settingSystem: 'System Setting',
+            },
+            'zh-cn': {
+                loginTitle: '登录',
+                loginUsername: '用户名',
+                loginPassword: '密码',
+                loginButton: '登录',
+                loginClose: '关闭',
+                logoutList: '退出登录',
+                settingUserGroup: '个人设置',
+                settingFile: '文件管理',
+                settingShare: '分享管理',
+                settingPersonal: '个人设置',
+                settingSystemGroup: '系统设置',
+                settingUsers: '用户管理',
+                settingSystem: '系统设置',
+            },
+        }
+        const store = {
+            debug: true,
+            state: {
+                user_info: null,
+                is_login: false,
+            },
+            setUserInfoAction(user_info) {
+                if (this.debug) console.log('setUserInfoAction triggered with', user_info)
+                this.state.user_info = user_info
+                this.state.is_login = true
+            },
+            clearUserInfoAction() {
+                if (this.debug) console.log('clearUserInfoAction triggered')
+                this.state.user_info = null
+                this.state.is_login = false
+            }
+        };
+        const FileView = {
+            template: '#fileView',
+            data: () => ({
+                store,
+                overlay: false,
+                tableHeader: [
+                    {text: '文件名', value: 'name'},
+                    {text: '大小', value: 'size'},
+                    {text: '修改时间', value: 'time'},
+                ],
+                tableData: [],
+                pathList: [],
+                fileSelected: [],
+                typeMap: {
+                    '': 'file',
+                    '.dir': 'dir',
+                    '.doc': 'doc',
+                    '.docx': 'doc',
+                    '.xls': 'xls',
+                    '.xlsx': 'xls',
+                    '.ppt': 'ppt',
+                    '.pptx': 'ppt',
+                    '.pdf': 'pdf',
+                    '.jpg': 'jpg',
+                    '.jpeg': 'jpeg',
+                    '.png': 'png',
+                    '.psd': 'psd',
+                    '.svg': 'svg',
+                    '.mp3': 'mp3',
+                    '.mp4': 'mp4',
+                    '.avi': 'avi',
+                    '.fla': 'fla',
+                    '.tar': 'tar',
+                    '.biz': 'tar',
+                    '.gz': 'tar',
+                    '.xz': 'tar',
+                    '.7z': 'tar',
+                    '.rar': 'tar',
+                    '.zip': 'zip',
+                    '.txt': 'txt',
+                    '.csv': 'csv',
+                    '.json': 'json',
+                    '.xml': 'xml',
+                    '.htm': 'html',
+                    '.html': 'html',
+                    '.js': 'js',
+                    '.css': 'css',
+                    '.ai': 'ai',
+                    '.bat': 'exe',
+                    '.cmd': 'exe',
+                    '.dll': 'exe',
+                    '.exe': 'exe',
+                    '.rtf': 'rtf',
+                    '.dwg': 'dwg',
+                    '.dbf': 'dbf',
+                    '.iso': 'iso',
+                    '.*': 'search',
+                },
+            }),
+            created() {
+                // 组件创建完后获取数据，
+                // 此时 data 已经被 observed 了
+                this.fetchData();
+            },
+            mounted() {
+                const fileTable = document.getElementById('fileTable');
+                const uploadFrame = document.getElementById('uploadFrame');
+                console.log(uploadFrame);
+                fileTable.ondragenter = (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();  //阻止拖入时的浏览器默认行为
+                    console.log('ondragenter');
+                    this.overlay = true;
+                };
+                uploadFrame.ondragover = (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();    //阻止拖来拖去的浏览器默认行为
+                };
+                uploadFrame.ondragleave = (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();  //阻止离开时的浏览器默认行为
+                    console.log('ondragleave');
+                    this.overlay = false;
+                };
+                uploadFrame.ondrop = (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();    //阻止拖放后的浏览器默认行为
+                    console.log('ondrop');
+                    this.overlay = false;
+                    const data = e.dataTransfer.files;  // 获取文件对象
+                    if (data.length < 1) {
+                        return;  // 检测是否有文件拖拽到页面
+                    }
+                    console.log(e.dataTransfer.files);
+                    const formData = new FormData();
+                    for (let i = 0; i < e.dataTransfer.files.length; i++) {
+                        console.log(e.dataTransfer.files[i]);
+                        formData.append('uploadfile', e.dataTransfer.files[i], e.dataTransfer.files[i].name);
+                    }
+                    this.tableData = this.tableData.concat(e.dataTransfer.files[0]);
+                    console.log(formData, this.tableData, e.dataTransfer.files[0]);
+                };
+            },
+            computed: {
+                loading() {
+                    return !this.store.state.is_login
+                }
+            },
+            watch: {
+                '$route': 'fetchData'
+            },
+            methods: {
+                getType(name) {
+                    if (name in this.typeMap) {
+                        return this.typeMap[name]
+                    } else return 'file'
+                },
+                goUpLevel() {
+                    const pathParts = this.$route.query.path.split('/');
+                    if (pathParts[1] !== '') {
+                        const newPath = pathParts.slice(0, -1).join('/') || '/';
+                        router.push({name: 'file', query: {path: newPath}});
+                    }
+                },
+                toggleSelection(rows) {
+                    console.log(this.$refs.tableData);
+                    if (rows === 'all') {
+                        this.$refs.tableData.toggleAllSelection();
+                    } else if (rows) {
+                        rows.forEach(row => {
+                            this.$refs.tableData.toggleRowSelection(row);
+                        });
+                    } else {
+                        this.$refs.tableData.clearSelection();
+                    }
+                },
+                handleSelectionChange(val) {
+                    this.fileSelected = val;
+                },
+                itemAction(item) {
+                    switch (item.type) {
+                        case '.dir':
+                            router.push({name: 'file', query: {path: item.path}});
+                            break;
+                        default:
+                            const file_url = "/api/file?path=" + item.path;
+                            window.open(file_url, 'download');
+                            break;
+                    }
+                },
+                fetchData() {
+                    const path = this.$route.query.path || '/';
+                    console.log(path);
+                    fetch('/api/file?path=' + path,)
+                        .then(res => res.json())
+                        .then((response) => {
+                            switch (response.data.type) {
+                                case '.dir':
+                                    this.tableData = response.data.items;
+                                    const pathParts = path.split('/');
+                                    console.log(pathParts, pathParts.length);
+                                    this.pathList = [];
+                                    pathParts.forEach((item, index) => {
+                                        if (index === 0) item = 'Home';
+                                        this.pathList.push({
+                                            text: item,
+                                            disabled: false,
+                                            exact: true,
+                                            to: {
+                                                name: 'file',
+                                                query: {
+                                                    path: pathParts.slice(0, index + 1).join('/') || '/'
+                                                }
+                                            }
+                                        })
+                                    });
+                                    break;
+                                case 'file':
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }).catch((error) => {
+                        console.log(error);
+                    })
+                }
+            }
+        };
+        const ShareView = {template: '#shareView'};
+        const UserView = {
+            template: '#userView',
+            data() {
+                return {
+                    tableHeader: [
+                        {text: '用户名', value: 'name'},
+                        {text: '已用空间', value: 'size'},
+                        {text: '上次登录时间', value: 'time'},
+                    ],
+                    tableData: []
+                }
+            },
+            created() {
+                // 组件创建完后获取数据，
+                // 此时 data 已经被 observed 了
+                this.fetchData()
+            },
+            watch: {
+                '$route': 'fetchData'
+            },
+            methods: {
+                fetchData: function () {
+                    fetch('/api/user', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'list'
+                        })
+                    }).then((response) => {
+                        console.log(response);
+                        response.data.body.map((item, index) => {
+                            this.tableData.push({
+                                name: item
+                            });
+                            fetch('/api/user', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    action: 'space',
+                                    username: item
+                                })
+                            }).then((response_space) => {
+                                this.$set(this.tableData, index, response_space.data.body)
+                            })
+                        });
+                    });
+                }
+            }
+        };
+        const SettingView = {template: '#settingView'};
+        const SystemView = {template: '#systemView'};
+        const router = new VueRouter({
+            mode: 'history',
+            routes: [
+                {path: '/file', name: 'file', component: FileView},
+                {path: '/share', name: 'share', component: ShareView},
+                {path: '/user', name: 'user', component: UserView},
+                {path: '/setting', name: 'setting', component: SettingView},
+                {path: '/system', name: 'system', component: SystemView},
+            ],
+        });
+        Vue.filter('ellipsis', function (value) {
+            if (!value) return ''
+            if (value.length > 20) {
+                return value.slice(0, 20) + '...'
+            }
+            return value
+        })
+        const app = new Vue({
+            el: '#app',
+            router: router,
+            vuetify: new Vuetify(),
+            props: {
+                source: String,
+            },
+            data: () => ({
+                store,
+                drawer: null,
+                language: 'zh-cn',
+            }),
+            created() {
+                // 在页面加载时读取 localStorage
+                if (localStorage.getItem('store')) {
+                    this.store.state = JSON.parse(localStorage.getItem('store'))
+                }
+                // 在页面刷新时将store保存到 localStorage 里
+                window.addEventListener('beforeunload', () => {
+                    localStorage.setItem('store', JSON.stringify(this.store.state))
+                })
+            },
+            computed: {
+                // 计算属性的 getter
+                i18n() {
+                    // `this` 指向 vm 实例
+                    return languages[this.language]
+                },
+                loginShow() {
+                    return !this.store.state.is_login
+                },
+            },
+            methods: {
+                onBtnLoginClick(name) {
+                    this.store.setUserInfoAction({name: 'username'})
+                    this.loginShow = false
+                },
+            },
+        });
+    }
+</script>
+</body>
+</html>
