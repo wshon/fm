@@ -5,9 +5,9 @@ const authConfig = {
     "root_pass": "muumwoshimima",  // 根目录密码，优先于.password
     "version": "1.0.6", // 程序版本
     "theme": "material", // material  classic
-    "client_id": "202264815644.apps.googleusercontent.com",
-    "client_secret": "X4Z3ca8xfWDb1Voo-F9a7ZxJ",
-    "refresh_token": "1//0677EHEQL5bGnCgYIARAAGAYSNwF-L9IrciPIlX6Y9M81H26epbUU1ZyNIO10XbwJfo3NyBiqt5dCFAgy498RPdAkv5dcIn2pD-w", // 授权 token
+    "client_id": "7922207e-decb-46bb-9b74-08884ba2808a",
+    "client_secret": "g08h~1bW3pcA4tYKLVl8xP.T1agJW-xd-.",
+    "refresh_token": "0.AUoADF4kMeaY4Uai17z5TP3ZUH4gInnL3rtGm3QIiEuigIpKAMs.AgABAAAAAAD--DLA3VO7QrddgJg7WevrAgDs_wQA9P-iKHmcZgMS0oGmOAcnwBVlhjqnGjBbIAwH5Z6w3c3fbdiIfouicydMHxSfEVwKR8XhNnq2Axb3pIbkFGIUaPw5GUGEHVGXrX4RdOGZhUVa1WXnEzfhgrsyIjxMTm74sHxIqlAMbh3jw6e8nbIgbaHIGiACbDIrn-u_bT020zxuR-nOUsCvJ9aboooWA0NaHXuo59R-f3Qj5yymJBDSyb5fluN5E5qEdy70-zs6CqTy8_i-mUfYI2vpRlAWNbAPO87oUxhwi7zhWOAY3KWgt0ct1Z59aIdr2FmsyXyhIAgwrqHfmekpAwX895BSzIatSM05h73fwQ7wHJmy7CJC9L96LKwtl7XXpUcvM7LZKJgf1zcxPN-79oKy1-RDLmEki86mf5BR8RFkFsEe1tGmIuL0Aig1WFiO54uCcpafjl_cxuEofrpxLjnpgpyQDxetHzEs4lZF78WDd21tCjvZCWZtZkZ9pm0izi7PJMQPSHK_qznitd_IoxNB-5JccjlUxRfxr02XeOnk3mVQZN7iZA1-yKr76DgXXUX142qhDdxE_nY2dJjtkpaaL2WL7EWakAC34d9TOSptVlYY2xmaKhsWPLrm3Eo33VLDWVcA3ijJn4-n8W7rzxf5zYQSEjLaHyUfS71I7e-eOsIfreUtq4uJDMu1oHLd3FiMKnaWInR-LvSimQeW_f4ZZcsoiQTCcNvU_xsvzOmyQ_nz2J2ZdeU1zpCZv28didbdoFlTB0s5_CtiPm9vCYjudZY7TPV3Y3zH7M48mgfYmTmy7AXXbNwRZNLhBBzMgYLc1RcgumCfJpO2CziysjcoRhWH5ZG-4p_gRx1yIN9vHNYBReI2gfCE4lbw4CZ6Bms5-h3x1oIoarB8JmIYAp2Nrv7vY16ZRAr4MkBY5dOe3o0DNJ6ypIiMr5lOPcjr6xByNEMHsrbubCapHg", // 授权 token
     "root_path": "/" // 根目录ID
 };
 
@@ -58,15 +58,25 @@ async function handleRequest(request) {
         return apiRequest(request);
     }
     let url = new URL(request.url);
-    let path = url.pathname;
-    console.log(path)
-    let action = url.searchParams.get('a');
-    if (action === 'download') {
-        if (path.split('/').pop().toLowerCase() === ".password") {
-            return new Response("", {status: 404});
+    console.log('req path: ' + url.pathname);
+    if (url.pathname.startsWith('/api/file')) {
+        let path = url.searchParams.get('path');
+        console.log('file path: ' + path);
+        let action = url.searchParams.get('action');
+        console.log('file action: ' + action);
+        try {
+            let fileItem = await oDataApi.getFileItem(path);
+        } catch (e) {
+            console.log(e);
+            return
         }
-        let fileItem = await oDataApi.getFileItem(path);
-        return Response.redirect(fileItem['@microsoft.graph.downloadUrl'], 302);
+        console.log('file fileItem: ' + fileItem);
+        if (action === 'view') {
+            if (path.split('/').pop().toLowerCase() === ".password") {
+                return new Response("", {status: 404});
+            }
+            return Response.redirect(fileItem['@microsoft.graph.downloadUrl'], 302);
+        }
     } else {
         return new Response(html, {status: 200, headers: {'Content-Type': 'text/html; charset=utf-8'}});
     }
@@ -212,6 +222,7 @@ class oneDrive {
                 this.authConfig.expires = Date.now() + 3500 * 1000;
             }
         }
+        console.log("accessToken", this.authConfig.accessToken);
         return this.authConfig.accessToken;
     }
 
@@ -221,6 +232,7 @@ class oneDrive {
         const headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         };
+        console.debug(headers);
         const post_data = {
             'client_id': this.authConfig.client_id,
             'client_secret': this.authConfig.client_secret,
@@ -228,14 +240,16 @@ class oneDrive {
             'grant_type': 'refresh_token',
             'requested_token_use': "on_behalf_of",
         }
-
+        console.debug(post_data);
         let requestOption = {
             'method': 'POST',
+            'mode': 'no-cors',
             'headers': headers,
             'body': this.enFormData(post_data)
         };
-
+        console.debug(requestOption);
         const response = await fetch(url, requestOption);
+        console.debug(response);
         return await response.json();
     }
 
