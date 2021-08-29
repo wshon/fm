@@ -1,16 +1,17 @@
 <template>
   <v-data-table
       id="fileTable"
+      class="row-pointer"
       :headers="tableHeader"
       :items="tableData"
       item-key="name"
       hide-default-footer
+      @click:row="itemAction"
   >
-    <template v-slot:item.name="{ item }" v-on:click="itemAction(item)">
+    <template v-slot:item.icon="{ item }" v-on:click="itemAction(item)">
       <svg class="type-icon" aria-hidden="true">
-        <use :xlink:href="'#type-'+getType(item.mimeType)"></use>
+        <use :xlink:href="'#type-'+getType(item)"></use>
       </svg>
-      <a style="margin-left: 10px" v-on:click="itemAction(item)"> {{ item.name }}</a>
     </template>
   </v-data-table>
 </template>
@@ -27,8 +28,10 @@ export default {
   },
   data: () => ({
     tableHeader: [
+      {text: '', value: 'icon', width: '3em', sortable: false},
       {text: '文件名', value: 'name'},
       {text: '大小', value: 'size'},
+      {text: '类型', value: 'mimeType'},
       {text: '修改时间', value: 'time'},
     ],
     tableData: [],
@@ -40,10 +43,18 @@ export default {
     '$route': 'fetchData'
   },
   methods: {
-    getType(name) {
-      if (name in typeMap) {
-        return typeMap[name]
-      } else return 'file'
+    getType(item) {
+      if (item.mimeType in typeMap) {
+        return typeMap[item.mimeType]
+      }
+      const ext = item.name.substring(item.name.lastIndexOf("."));
+      if (ext in typeMap) {
+        return typeMap[ext]
+      }
+      if (typeMap['*']) {
+        return typeMap['*'];
+      }
+      return 'file'
     },
     itemAction(item) {
       switch (item.mimeType) {
@@ -79,10 +90,14 @@ export default {
 
 <style scoped>
 .type-icon {
-  width: 1em;
-  height: 1em;
+  width: 3em;
+  height: 3em;
   vertical-align: -0.15em;
   fill: currentColor;
   overflow: hidden;
+}
+
+.row-pointer >>> tbody tr :hover {
+  cursor: pointer;
 }
 </style>

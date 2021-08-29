@@ -1,14 +1,12 @@
 <template>
   <v-treeview
-      v-model="tree"
-      :items="items"
       activatable
+      :active.sync="active"
       item-key="path"
-      open-on-click
-
+      :items="items"
       :load-children="fetchItems"
       :open.sync="open"
-      :active.sync="active"
+      open-on-click
       transition
   >
     <template v-slot:prepend="{ item, open }">
@@ -32,7 +30,7 @@ export default {
   },
   data: () => ({
     active: [],
-    open: ['public'],
+    open: [],
     files: {
       html: 'mdi-language-html5',
       js: 'mdi-nodejs',
@@ -43,38 +41,53 @@ export default {
       txt: 'mdi-file-document-outline',
       xls: 'mdi-file-excel',
     },
-    tree: [],
     items: [],
+    keepOpen: [],
   }),
   mounted() {
     files.getItems().then(items => {
       console.log(items);
       this.items.push(...items.children);
       for (const key in this.items) {
-        console.log(this.items[key]);
-        console.log(this.items[key].children);
         if (this.items[key].mimeType === 'default/foldr' && !this.items[key].children === undefined) {
           this.items[key].children = []
         }
       }
     });
+    const filePath = this.path;
+    const pathParts = filePath.split('/')
+    filePath.split('/').forEach((item, index) => {
+      if (index === 0) item = 'ROOT'
+      const newPath = pathParts.slice(0, index + 1).join('/') || '';
+      console.log(newPath);
+      this.keepOpen.push(newPath)
+    });
   },
+  // watch: {
+  //   open: 'keepOpen'
+  // },
   methods: {
+    // keepOpen() {
+    //   console.log('call keepOpen');
+    //   for (const key in this.keepOpen) {
+    //     if (!(this.keepOpen[key] in this.open)) {
+    //       this.open.push(this.keepOpen[key]);
+    //     }
+    //   }
+    // },
     async fetchItems(item) {
-      console.log('尝试获取子文件夹数据', item);
-      files.getItems(item.path).then(itemData => {
-        console.log('获取子文件夹数据成功', itemData);
+      console.log('load tree children for', item.path);
+      return files.getItems(item.path).then(itemData => {
+        console.log('success load children data', item.path);
         for (const key in itemData.children) {
-          console.log('子文件夹数据', key, itemData.children[key]);
           if (itemData.children[key].mimeType !== 'default/foldr') continue;
-          if (item.children[key] === undefined) {
-            item.children[key] = itemData.children[key]
-          }
+          console.log('children foldr', key, 'path is', itemData.children[key].path);
+          item.children.push(itemData.children[key])
         }
         if (!item.children || item.children.length === 0) {
           item.children = undefined;
         }
-      });
+      }).catch(err => console.warn(err));
     },
   },
 }
