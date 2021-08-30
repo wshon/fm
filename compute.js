@@ -8,23 +8,32 @@ const authConfig = {
 };
 
 const page = `
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>Test Web worker</title>
-  <link href="http://localhost:8080/js/about.js" rel="prefetch">
-  <link href="http://localhost:8080/js/app.js" rel="preload" as="script">
-  <link href="http://localhost:8080/js/chunk-vendors.js" rel="preload" as="script">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" href="/favicon.ico">
+  <title>FileManager</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wshon/fm@assets/font/iconfont.css">
+  <script src="https://cdn.jsdelivr.net/gh/wshon/fm@assets/font/iconfont.js"></script>
+  <link href="https://cdn.jsdelivr.net/gh/wshon/fm@assets/js/about.34d026b7.js" rel="prefetch">
+  <link href="https://cdn.jsdelivr.net/gh/wshon/fm@assets.v0.1.0/css/app.ff00e520.css" rel="preload" as="style">
+  <link href="https://cdn.jsdelivr.net/gh/wshon/fm@assets.v0.1.0/css/chunk-vendors.0f71c3a4.css" rel="preload" as="style">
+  <link href="https://cdn.jsdelivr.net/gh/wshon/fm@assets.v0.1.0/js/app.c5d9fc68.js" rel="preload" as="script">
+  <link href="https://cdn.jsdelivr.net/gh/wshon/fm@assets.v0.1.0/js/chunk-vendors.06b8d328.js" rel="preload" as="script">
+  <link href="https://cdn.jsdelivr.net/gh/wshon/fm@assets.v0.1.0/css/chunk-vendors.0f71c3a4.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/gh/wshon/fm@assets.v0.1.0/css/app.ff00e520.css" rel="stylesheet">
 </head>
 <body>
-<noscript>
-  <strong>We're sorry but pypst_web doesn't work properly without JavaScript enabled. Please enable it to
-    continue.</strong>
-</noscript>
+<noscript><strong>We're sorry but FileManager doesn't work properly without JavaScript enabled. Please enable it to
+  continue.</strong></noscript>
 <div id="app"></div>
-<!-- built files will be auto injected -->
-<script type="text/javascript" src="http://localhost:8080/js/chunk-vendors.js"></script>
-<script type="text/javascript" src="http://localhost:8080/js/app.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/wshon/fm@assets.v0.1.0/js/chunk-vendors.06b8d328.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/wshon/fm@assets.v0.1.0/js/app.c5d9fc68.js"></script>
 </body>
 </html>
 `;
