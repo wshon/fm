@@ -1,80 +1,76 @@
 <template>
-  <v-treeview
-      activatable
-      :active.sync="active"
-      item-key="path"
-      :items="items"
-      :load-children="fetchItems"
-      :open.sync="open"
-      open-on-click
-      transition
+  <v-jstree
+      class="folder-tree"
+      ref="folderTree"
+      :data="items"
+      allow-transition
+      whole-row
+      value-field-name="path"
+      :async="loadData"
+      @item-click="itemClick"
   >
-    <template v-slot:prepend="{ item, open }">
-      <v-icon v-if="!item.file">
-        {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-      </v-icon>
-      <v-icon v-else>
-        {{ files[item.file] }}
-      </v-icon>
+    <template scope="_">
+      <div style="display: inherit; width: 200px">
+        <svg class="type-icon" aria-hidden="true">
+          <use xlink:href="#type-dir"></use>
+        </svg>
+        {{ _.model.name }}
+      </div>
     </template>
-  </v-treeview>
+  </v-jstree>
 </template>
 
 <script>
 import files from "../apis/files";
+import VueJsTree from 'vue-jstree'
+import router from "@/router";
 
 export default {
   name: "FolderTree",
+  components: {
+    "v-jstree": VueJsTree
+  },
   props: {
     path: String,
   },
   data: () => ({
-    active: [],
-    open: [],
-    files: {
-      html: 'mdi-language-html5',
-      js: 'mdi-nodejs',
-      json: 'mdi-json',
-      md: 'mdi-markdown',
-      pdf: 'mdi-file-pdf',
-      png: 'mdi-file-image',
-      txt: 'mdi-file-document-outline',
-      xls: 'mdi-file-excel',
-    },
     items: [],
-    keepOpen: [],
   }),
   mounted() {
-    files.getItems().then(items => {
-      console.log(items);
-      this.items.push(...items.children);
-      for (const key in this.items) {
-        if (this.items[key].mimeType === 'default/foldr' && !this.items[key].children === undefined) {
-          this.items[key].children = []
-        }
-      }
-    });
-    const filePath = this.path;
-    const pathParts = filePath.split('/')
-    filePath.split('/').forEach((item, index) => {
-      if (index === 0) item = 'ROOT'
-      const newPath = pathParts.slice(0, index + 1).join('/') || '';
-      console.log(newPath);
-      this.keepOpen.push(newPath)
-    });
+    // this.asyncData = [
+    //   this.$refs.folderTree.initializeLoading()
+    // ]
+    // this.$refs.folderTree.handleAsyncLoad(this.asyncData, this.$refs.folderTree)
   },
-  // watch: {
-  //   open: 'keepOpen'
-  // },
   methods: {
-    // keepOpen() {
-    //   console.log('call keepOpen');
-    //   for (const key in this.keepOpen) {
-    //     if (!(this.keepOpen[key] in this.open)) {
-    //       this.open.push(this.keepOpen[key]);
-    //     }
-    //   }
-    // },
+    itemClick(oriNode) {
+      const item = oriNode.data;
+      console.log('call itemClick from item', item);
+      if (item && item.path) {
+        router.push({path: `/files${item.path}`});
+      }
+    },
+    loadData(oriNode, resolve) {
+      const item = oriNode.data;
+      const path = item.path || '/';
+      console.debug('load tree data for path', path, 'from item', item);
+      files.getItems(path).then(items => {
+        console.debug('  load tree data success', items);
+        const newItems = [];
+        for (const key in items.children) {
+          if (items.children[key].mimeType === 'default/foldr') {
+            const newItem = {
+              name: items.children[key].name,
+              path: items.children[key].path,
+              selected: false,
+            };
+            console.debug('  load children', key, 'data', newItem);
+            newItems.push(newItem);
+          }
+        }
+        resolve(newItems)
+      });
+    },
     async fetchItems(item) {
       console.log('load tree children for', item.path);
       return files.getItems(item.path).then(itemData => {
@@ -94,5 +90,21 @@ export default {
 </script>
 
 <style scoped>
+.type-icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  fill: currentColor;
+  overflow: hidden;
+}
 
+.tree-default {
+  padding-left: 12px;
+}
+</style>
+
+<style>
+.folder-tree .tree-children {
+  padding-left: 0;
+}
 </style>
