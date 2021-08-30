@@ -5,7 +5,7 @@
     </v-navigation-drawer>
     <v-app-bar app color="teal" dark clipped-left>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
-      <v-toolbar-title>ZeroNas</v-toolbar-title>
+      <v-toolbar-title>ZeroPan</v-toolbar-title>
       <v-divider class="mx-4" inset vertical></v-divider>
       <span class="subheading">Hello Guys.</span>
       <v-spacer></v-spacer>
@@ -105,14 +105,6 @@ export default {
         console.debug('  target path is', newPath)
         router.push({path: `/files${newPath}`});
       }
-    },
-    goToPath(path) {
-      console.log('goto', path);
-      // const pathParts = this.$route.query.path.split('/');
-      // if (pathParts[1] !== '') {
-      //   const newPath = pathParts.slice(0, -1).join('/') || '/';
-      //   router.push({name: 'file', query: {path: newPath}});
-      // }
     },
   },
 }
