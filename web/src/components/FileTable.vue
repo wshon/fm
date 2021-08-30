@@ -59,7 +59,7 @@ export default {
     itemAction(item) {
       switch (item.mimeType) {
         case 'default/foldr':
-          router.push({path: `/files${item.path}`});
+          if (item.path && this.path !== item.path) files.getItems(item.path).then(() => router.push({path: `/files${item.path}`}));
           break;
         default:
           window.open(item.download, '_self');
