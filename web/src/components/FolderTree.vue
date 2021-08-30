@@ -9,7 +9,7 @@
       :async="loadData"
       @item-click="itemClick"
   >
-    <template scope="_">
+    <template slot-scope="_">
       <div style="display: inherit; width: 200px" @dblclick="e=>itemDbClick(_,_.model,e)">
         <svg class="type-icon" aria-hidden="true">
           <use xlink:href="#type-dir"></use>
