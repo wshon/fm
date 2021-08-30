@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import files from "../apis/files";
+import files from "@/apis/files";
 import VueJsTree from 'vue-jstree'
 import router from "@/router";
 
