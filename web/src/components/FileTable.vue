@@ -69,8 +69,8 @@ export default {
     fetchData() {
       let path = this.path;
       if (path.substr(0, 1) !== '/') path = '/' + path
-      console.log('get items for path', path);
-      files.getItems(path).then((items) => {
+      console.debug('load table data for path', path);
+      files.getItems(path).then(items => {
         switch (items.mimeType) {
           case 'default/foldr':
             this.tableData = items.children;
@@ -80,9 +80,7 @@ export default {
           default:
             break;
         }
-      }).catch((error) => {
-        console.log(error);
-      })
+      }).catch(console.warn);
     }
   }
 }
