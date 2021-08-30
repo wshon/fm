@@ -10,7 +10,7 @@
       @item-click="itemClick"
   >
     <template scope="_">
-      <div style="display: inherit; width: 200px">
+      <div style="display: inherit; width: 200px" @dblclick="e=>itemDbClick(_,_.model,e)">
         <svg class="type-icon" aria-hidden="true">
           <use xlink:href="#type-dir"></use>
         </svg>
@@ -43,48 +43,35 @@ export default {
     // this.$refs.folderTree.handleAsyncLoad(this.asyncData, this.$refs.folderTree)
   },
   methods: {
-    itemClick(oriNode) {
-      const item = oriNode.data;
-      console.log('call itemClick from item', item);
-      if (item && item.path) {
-        router.push({path: `/files${item.path}`});
-      }
+    itemDbClick(node, item, event) {
+      console.debug('call itemDbClick from item', node, item, event);
+      if (item && !item.loading && item.children.length > 0) item.opened = !item.opened;
+    },
+    itemClick(node, item, event) {
+      console.debug('call itemClick from item', node, item, event);
+      if (item && item.path && item.path !== this.path) router.push({path: `/files${item.path}`});
     },
     loadData(oriNode, resolve) {
+      console.debug('loadData', oriNode);
       const item = oriNode.data;
       const path = item.path || '/';
       console.debug('load tree data for path', path, 'from item', item);
       files.getItems(path).then(items => {
-        console.debug('  load tree data success', items);
+        console.debug('  load tree data success', path, items);
         const newItems = [];
         for (const key in items.children) {
           if (items.children[key].mimeType === 'default/foldr') {
             const newItem = {
               name: items.children[key].name,
               path: items.children[key].path,
-              selected: false,
             };
-            console.debug('  load children', key, 'data', newItem);
+            console.debug(' load tree children', key, 'data', newItem);
             newItems.push(newItem);
           }
         }
         resolve(newItems)
-      });
-    },
-    async fetchItems(item) {
-      console.log('load tree children for', item.path);
-      return files.getItems(item.path).then(itemData => {
-        console.log('success load children data', item.path);
-        for (const key in itemData.children) {
-          if (itemData.children[key].mimeType !== 'default/foldr') continue;
-          console.log('children foldr', key, 'path is', itemData.children[key].path);
-          item.children.push(itemData.children[key])
-        }
-        if (!item.children || item.children.length === 0) {
-          item.children = undefined;
-        }
-      }).catch(err => console.warn(err));
-    },
+      }).catch(console.warn);
+    }
   },
 }
 </script>
