@@ -41,9 +41,9 @@
 </template>
 
 <script>
-import FolderTree from "../components/FolderTree"
-import FileTable from '../components/FileTable';
-import router from "../router";
+import FolderTree from "@/components/FolderTree"
+import FileTable from '@/components/FileTable';
+import router from "@/router";
 
 export default {
   name: "Files",

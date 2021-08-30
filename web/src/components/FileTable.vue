@@ -17,9 +17,9 @@
 </template>
 
 <script>
-import files from "../apis/files";
-import router from "../router";
-import typeMap from "../utils/typeMap";
+import files from "@/apis/files";
+import router from "@/router";
+import typeMap from "@/utils/typeMap";
 
 export default {
   name: "FileTable",
