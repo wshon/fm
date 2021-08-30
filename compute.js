@@ -1,19 +1,13 @@
-console.log("worker start loading");
-
 const authConfig = {
-    "siteName": "GoIndex", // 网站名称
-    "root_pass": "muumwoshimima",  // 根目录密码，优先于.password
-    "version": "1.0.6", // 程序版本
-    "theme": "material", // material  classic
-    "client_id": "202264815644.apps.googleusercontent.com",
-    "client_secret": "X4Z3ca8xfWDb1Voo-F9a7ZxJ",
-    "refresh_token": "1//0677EHEQL5bGnCgYIARAAGAYSNwF-L9IrciPIlX6Y9M81H26epbUU1ZyNIO10XbwJfo3NyBiqt5dCFAgy498RPdAkv5dcIn2pD-w", // 授权 token
-    "root_path": "/" // 根目录ID
+  "root_pass": "your root_pass",  // 根目录密码，优先于.password
+  "version": "1.0.0", // 程序版本
+  "client_id": "your client_id",
+  "client_secret": "your client_secret",
+  "refresh_token": "your refresh_token", // 授权 token
+  "root_path": "/" // 根目录ID
 };
 
-let oDataApi;
-
-const html = `
+const page = `
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -35,279 +29,212 @@ const html = `
 </html>
 `;
 
-self.addEventListener('fetch', event => {
-    console.log('newFetchEvent', event.request)
-    // local debug
-    if (event.request.url.indexOf('127.0.0.1') === -1) {
-        console.log('get origin ' + event.request.url)
-        return event.respondWith(fetch(event.request));
-    }
-    // local debug
-    event.respondWith(handleRequest(event.request));
-});
+if (KV === undefined) KV = null;
+let od = null;
+
+addEventListener('fetch', event => {
+  event.respondWith(
+    handleRequest(event.request).catch(
+      (err) => new Response(err.stack, {status: 500})
+    )
+  );
+})
 
 /**
- * Fetch and log a request
+ * Respond with hello worker text
  * @param {Request} request
  */
 async function handleRequest(request) {
-    if (oDataApi === undefined) {
-        oDataApi = new oneDrive(authConfig);
-    }
-    if (request.method === 'POST') {
-        return apiRequest(request);
-    }
-    let url = new URL(request.url);
-    let path = url.pathname;
-    console.log(path)
-    let action = url.searchParams.get('a');
-    if (action === 'download') {
-        if (path.split('/').pop().toLowerCase() === ".password") {
-            return new Response("", {status: 404});
-        }
-        let fileItem = await oDataApi.getFileItem(path);
-        return Response.redirect(fileItem['@microsoft.graph.downloadUrl'], 302);
-    } else {
-        return new Response(html, {status: 200, headers: {'Content-Type': 'text/html; charset=utf-8'}});
-    }
+  if (od == null) od = new oneDrive(authConfig)
+  const {pathname} = new URL(request.url);
+  if (pathname === '/api/file') {
+    return await apiFileRequest(request)
+  } else {
+    return new Response(page, {
+      status: 200,
+      headers: {'Content-Type': 'text/html; charset=utf-8'}
+    });
+  }
 }
 
+codeMap = {
+  'itemNotFound': -50001
+}
 
-async function apiRequest(request) {
-    let obj;
-    let url = new URL(request.url);
-    let path = url.pathname;
+async function apiFileRequest(request) {
+  const accessToken = await od.getAccessToken()
+  if (!accessToken) {
+    return newJsonResponse({
+      code: -10001,
+      message: 'Get accessToken failed',
+    })
+  }
+  const {searchParams} = new URL(request.url);
+  const path = searchParams.get('path');
+  const item = await od.getDriverItem(path);
+  if (item['error']) {
+    const error = item['error']
+    return newJsonResponse({
+      code: codeMap[error['code']] || -50000,
+      message: error['message'] || 'Undefined remote error',
+    })
+  }
+  const data = od.formatDriverItem(item);
+  const debug = searchParams.get('debug');
+  if (debug === '65535') data.item = item
+  return newJsonResponse({
+    code: 0,
+    message: 'success',
+    data
+  })
+}
 
-    let option = {status: 200, headers: {'Access-Control-Allow-Origin': '*'}}
-
-    if (path.substr(-1) === '/') {
-        // check password
-        let password = await oDataApi.password(path);
-        console.log("dir password", password);
-        if (password !== undefined && password != null && password !== "") {
-            try {
-                obj = await request.json();
-            } catch (e) {
-                obj = {};
-            }
-            console.log(password, obj);
-            if (password !== obj.password) {
-                let html = `{"error": {"code": 401,"message": "password error."}}`;
-                return new Response(html, option);
-            }
-        }
-        let folderItem = await oDataApi.getFolderItem(path);
-        return new Response(JSON.stringify(folderItem), option);
-    } else {
-        let fileItem = await oDataApi.getFileItem(path);
-        return new Response(JSON.stringify(fileItem), option);
+function newJsonResponse(data) {
+  return new Response(JSON.stringify(data), {
+    status: 200, headers: {
+      "Content-Type": "application/json",
+      'Access-Control-Allow-Origin': '*'
     }
+  })
+}
+
+class cache {
+  constructor() {
+    console.log("kv load failed!");
+    this.cache = {}
+  }
+
+  get(name) {
+    return this.cache[name] || null;
+  }
+
+  put(name, value) {
+    this.cache[name] = value;
+  }
 }
 
 class oneDrive {
-    constructor(authConfig) {
-        this.fileHost = "https://graph.microsoft.com/v1.0";
-        this.authConfig = authConfig;
-        this.files = [];
-        this.passwords = [];
-        if (authConfig.root_path[0] !== '/') {
-            authConfig.root_path = '/' + authConfig.root_path
-        }
-        if (authConfig.root_path.substr(-1) === '/') {
-            authConfig.root_path = authConfig.root_path.slice(0, -1)
-        }
-        if (authConfig.root_pass !== "") {
-            this.passwords["/"] = authConfig.root_pass;
-        }
-        this.accessToken();
+  constructor(authConfig) {
+    this.cache = KV || new cache();
+    this.fileHost = "https://graph.microsoft.com/v1.0";
+    this.driveRoot = "/me/drive/root";
+    this.authConfig = authConfig;
+    this.files = [];
+    this.passwords = [];
+    if (this.authConfig.root_path[0] !== '/') {
+      this.authConfig.root_path = '/' + this.authConfig.root_path
     }
-
-    async getFileItem(path) {
-        if (typeof this.files[path] == 'undefined') {
-            this.files[path] = await this._getFileItem(path);
-        }
-        return this.files[path];
+    if (this.authConfig.root_path.substr(-1) === '/') {
+      this.authConfig.root_path = this.authConfig.root_path.slice(0, -1)
     }
-
-    async _getFileItem(path) {
-        console.log("_getFileItem", path);
-        if (path === undefined) {
-            return null;
-        }
-        let url = this.fileHost + '/me/drive/root:' + this.authConfig.root_path + path;
-        const params = {};
-        params.select = "id,name,size,createdDateTime,lastModifiedDateTime,file,thumbnails,parentReference"
-        url += '?' + this.enQuery(params);
-        let requestOption = await this.requestOption();
-        let response = await fetch(url, requestOption);
-        return await response.json();
+    if (this.authConfig.root_pass !== "") {
+      this.passwords["/"] = this.authConfig.root_pass;
     }
+  }
 
-    // 通过 request cache 来缓存
-    async getFolderItem(path) {
-        return await this._getFolderItem(path);
+  async getAccessToken() {
+    console.log("call getAccessToken");
+    let accessToken = await KV.get("accessToken");
+    accessToken = JSON.parse(accessToken || '{}')
+    if (accessToken.expires === undefined || accessToken.expires < Date.now()) {
+      console.log("accessToken not exist or expires, to get new");
+      const rsp = await this.fetchNewAccessToken();
+      if (rsp['access_token'] !== undefined) {
+        accessToken.accessToken = rsp['access_token'];
+        accessToken.expires = Date.now() + 3500 * 1000;
+        await KV.put("accessToken", JSON.stringify(accessToken))
+      } else {
+        console.log("get new accessToken failed", rsp);
+        return null;
+      }
     }
+    return accessToken.accessToken;
+  }
 
-    async _getFolderItem(path) {
-        console.log("_getFolderItem", path);
-        if (path === undefined) {
-            return null;
-        }
-        let url = this.fileHost + '/me/drive/root:' + this.authConfig.root_path + path;
-        const params = {};
-        params.select = "id,name,size,lastModifiedDateTime,parentReference"
-        params.expand = "children(select=id,name,size,lastModifiedDateTime,@microsoft.graph.downloadUrl)";
-        url += '?' + this.enQuery(params);
-        const requestOption = await this.requestOption();
-        const response = await fetch(url, requestOption);
-        return await response.json();
+  async fetchNewAccessToken() {
+    console.log("call fetchNewAccessToken");
+    const reqUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+    const reqOption = {
+      'method': 'POST',
+      'body': this.packFormData({
+        'client_id': this.authConfig.client_id,
+        'client_secret': this.authConfig.client_secret,
+        'refresh_token': this.authConfig.refresh_token,
+        'grant_type': 'refresh_token',
+        'requested_token_use': "on_behalf_of",
+      })
+    };
+    const response = await fetch(reqUrl, reqOption);
+    return await response.json();
+  }
+
+  async getAuthedOption(headers = {}, method = 'GET') {
+    console.log("call getAuthedOption", headers, method);
+    const accessToken = await this.getAccessToken();
+    headers['authorization'] = 'Bearer ' + accessToken;
+    return {'method': method, 'headers': headers};
+  }
+
+  async getDriverItem(path) {
+    console.log("call getDriverItem", path);
+    if (path === undefined) {
+      return null;
     }
+    if (path === "/") path = "";
+    if (path || this.authConfig.root_path) path = ":" + this.authConfig.root_path + path;
+    let url = this.fileHost + this.driveRoot + encodeURI(path);
+    const params = {};
+    params.select = "id,name,size,parentReference,createdDateTime,lastModifiedDateTime,file,@microsoft.graph.downloadUrl,thumbnails"
+    params.expand = "children(select=id,name,size,createdDateTime,lastModifiedDateTime,file,@microsoft.graph.downloadUrl,thumbnails)";
+    url += '?' + this.packQueryParams(params);
+    const reqOption = await this.getAuthedOption();
+    const response = await fetch(url, reqOption);
+    return await response.json();
+  }
 
-    async password(path) {
-        if (this.passwords[path] !== undefined) {
-            return this.passwords[path];
-        }
-        console.log("load", path, ".password", this.passwords[path]);
-        let fileItem = await oDataApi.getFileItem(path + '.password');
-        if (fileItem === undefined) {
-            this.passwords[path] = null;
-        } else {
-            const url = fileItem['@microsoft.graph.downloadUrl'];
-            const requestOption = await this.requestOption();
-            const response = await this.fetch200(url, requestOption);
-            this.passwords[path] = await response.text();
-        }
-        return this.passwords[path];
+  formatDriverItem(itemData, path) {
+    let newData = {}
+    newData.id = itemData['id'];
+    newData.name = itemData['name'];
+    newData.size = itemData['size'];
+    newData.ctime = itemData['createdDateTime'];
+    newData.mtime = itemData['lastModifiedDateTime'];
+    newData.parent = path || ((itemData['parentReference'] || {})['path'] || '').split(':')[1] || '';
+    if (newData.parent === '' && newData.name === 'root') newData.name = ''
+    if (newData.parent.substr(-1) !== '/') newData.parent = newData.parent + '/'
+    newData.path = newData.parent + newData.name;
+    if (itemData['file']) {
+      newData.mimeType = (itemData['file'] || {})['mimeType'] || 'application/unknown'
+      newData.download = itemData['@microsoft.graph.downloadUrl'];
+      return newData;
+    } else {
+      newData.mimeType = 'default/foldr'
+      newData.children = []
     }
-
-    async _findDirId(parent, name) {
-        name = decodeURIComponent(name).replace(/'/g, "\\'");
-
-        console.log("_findDirId", parent, name);
-
-        if (parent === undefined) {
-            return null;
-        }
-
-        let url = 'https://www.googleapis.com/drive/v3/files';
-        let params = {'includeItemsFromAllDrives': true, 'supportsAllDrives': true};
-        params.q = `'${parent}' in parents and mimeType = 'application/vnd.google-apps.folder' and name = '${name}'  and trashed = false`;
-        params.fields = "nextPageToken, files(id, name, mimeType)";
-        url += '?' + this.enQuery(params);
-        let requestOption = await this.requestOption();
-        let response = await fetch(url, requestOption);
-        let obj = await response.json();
-        if (obj.files[0] === undefined) {
-            return null;
-        }
-        return obj.files[0].id;
+    if (itemData['children']) {
+      for (const i in itemData['children']) {
+        const childData = itemData['children'][i]
+        newData.children.push(this.formatDriverItem(childData, newData.path));
+      }
     }
+    return newData;
+  }
 
-    async accessToken() {
-        console.log("accessToken");
-        if (this.authConfig.expires === undefined || this.authConfig.expires < Date.now()) {
-            const obj = await this.fetchAccessToken();
-            if (obj.access_token !== undefined) {
-                this.authConfig.accessToken = obj.access_token;
-                this.authConfig.expires = Date.now() + 3500 * 1000;
-            }
-        }
-        return this.authConfig.accessToken;
+  packQueryParams(data) {
+    const ret = [];
+    for (const d in data) {
+      ret.push(encodeURIComponent(d) + '=' + encodeURIComponent(data[d]));
     }
+    return ret.join('&');
+  }
 
-    async fetchAccessToken() {
-        console.log("fetchAccessToken");
-        const url = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
-        const headers = {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        };
-        const post_data = {
-            'client_id': this.authConfig.client_id,
-            'client_secret': this.authConfig.client_secret,
-            'refresh_token': this.authConfig.refresh_token,
-            'grant_type': 'refresh_token',
-            'requested_token_use': "on_behalf_of",
-        }
-
-        let requestOption = {
-            'method': 'POST',
-            'headers': headers,
-            'body': this.enFormData(post_data)
-        };
-
-        const response = await fetch(url, requestOption);
-        return await response.json();
+  packFormData(data) {
+    const formData = new FormData();
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        formData.append(key, data[key]);
+      }
     }
-
-    async fetch200(url, requestOption) {
-        let response;
-        for (let i = 0; i < 3; i++) {
-            response = await fetch(url, requestOption);
-            console.log(response.status);
-            if (response.status !== 403) {
-                break;
-            }
-            await this.sleep(800 * (i + 1));
-        }
-        return response;
-    }
-
-    async requestOption(headers = {}, method = 'GET') {
-        const accessToken = await this.accessToken();
-        headers['authorization'] = 'Bearer ' + accessToken;
-        return {'method': method, 'headers': headers};
-    }
-
-    enQuery(data) {
-        const ret = [];
-        for (let d in data) {
-            ret.push(encodeURIComponent(d) + '=' + encodeURIComponent(data[d]));
-        }
-        return ret.join('&');
-    }
-
-    enFormData(data) {
-        const formData = new FormData();
-        for (const key in data) {
-            if (data.hasOwnProperty(key)) {
-                formData.append(key, data[key]);
-            }
-        }
-        return formData;
-    }
-
-    async gatherResponse(response) {
-        const {headers} = response;
-        const contentType = headers.get("content-type");
-        if (contentType.includes("application/json")) {
-            return await response.json();
-        } else if (contentType.includes("application/text")) {
-            return await response.text();
-        } else if (contentType.includes("text/html")) {
-            return await response.text();
-        } else {
-            return await response.text();
-        }
-    }
-
-    sleep(ms) {
-        return new Promise(function (resolve, reject) {
-            let i = 0;
-            setTimeout(function () {
-                console.log('sleep' + ms);
-                i++;
-                if (i >= 2) reject(new Error('i>=2'));
-                else resolve(i);
-            }, ms);
-        })
-    }
+    return formData;
+  }
 }
-
-String.prototype.trim = function (char) {
-    if (char) {
-        return this.replace(new RegExp('^\\' + char + '+|\\' + char + '+$', 'g'), '');
-    }
-    return this.replace(/^\s+|\s+$/g, '');
-};
-
-console.log("worker load complete");
