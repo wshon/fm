@@ -44,15 +44,15 @@ export default {
   },
   methods: {
     getType(item) {
-      if (item.mimeType in typeMap) {
-        return typeMap[item.mimeType]
+      if (item.mimeType in typeMap.mimeType) {
+        return typeMap.mimeType[item.mimeType]
       }
       const ext = item.name.substring(item.name.lastIndexOf("."));
-      if (ext in typeMap) {
-        return typeMap[ext]
+      if (ext in typeMap.ext) {
+        return typeMap.ext[ext]
       }
-      if (typeMap['*']) {
-        return typeMap['*'];
+      if (typeMap.default) {
+        return typeMap.default;
       }
       return 'file'
     },
