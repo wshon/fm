@@ -8228,6 +8228,11 @@ vue-hot-reload-api@^2.3.0:
   resolved "https://registry.nlark.com/vue-hot-reload-api/download/vue-hot-reload-api-2.3.4.tgz#532955cc1eb208a3d990b3a9f9a70574657e08f2"
   integrity sha1-UylVzB6yCKPZkLOp+acFdGV+CPI=
 
+vue-jstree@^2.1.6:
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/vue-jstree/-/vue-jstree-2.1.6.tgz#44827ad72953ed77da6590ce4e8f37f7787f8653"
+  integrity sha512-vtUmhLbfE2JvcnYNRXauJPkNJSRO/f9BTsbxV+ESXP/mMQPVUIYI4EkSHKSEOxVDHTU7SfLp/AxplmaAl6ctcg==
+
 "vue-loader-v16@npm:vue-loader@^16.1.0":
   version "16.5.0"
   resolved "https://registry.nlark.com/vue-loader/download/vue-loader-16.5.0.tgz?cache=0&sync_timestamp=1628666727543&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fvue-loader%2Fdownload%2Fvue-loader-16.5.0.tgz#09c4e0712466899e34b99a686524f19165fb2892"

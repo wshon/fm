@@ -1,98 +1,97 @@
 <template>
-  <v-treeview
-      activatable
-      :active.sync="active"
-      item-key="path"
-      :items="items"
-      :load-children="fetchItems"
-      :open.sync="open"
-      open-on-click
-      transition
+  <v-jstree
+      class="folder-tree"
+      ref="folderTree"
+      :data="items"
+      allow-transition
+      whole-row
+      value-field-name="path"
+      :async="loadData"
+      @item-click="itemClick"
   >
-    <template v-slot:prepend="{ item, open }">
-      <v-icon v-if="!item.file">
-        {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-      </v-icon>
-      <v-icon v-else>
-        {{ files[item.file] }}
-      </v-icon>
+    <template slot-scope="_">
+      <div style="display: inherit; width: 200px" @dblclick="e=>itemDbClick(_,_.model,e)">
+        <svg class="type-icon" aria-hidden="true">
+          <use xlink:href="#type-dir"></use>
+        </svg>
+        {{ _.model.name }}
+      </div>
     </template>
-  </v-treeview>
+  </v-jstree>
 </template>
 
 <script>
-import files from "../apis/files";
+import files from "@/apis/files";
+import VueJsTree from 'vue-jstree'
+import router from "@/router";
 
 export default {
   name: "FolderTree",
+  components: {
+    "v-jstree": VueJsTree
+  },
   props: {
     path: String,
   },
   data: () => ({
-    active: [],
-    open: [],
-    files: {
-      html: 'mdi-language-html5',
-      js: 'mdi-nodejs',
-      json: 'mdi-json',
-      md: 'mdi-markdown',
-      pdf: 'mdi-file-pdf',
-      png: 'mdi-file-image',
-      txt: 'mdi-file-document-outline',
-      xls: 'mdi-file-excel',
-    },
     items: [],
-    keepOpen: [],
   }),
   mounted() {
-    files.getItems().then(items => {
-      console.log(items);
-      this.items.push(...items.children);
-      for (const key in this.items) {
-        if (this.items[key].mimeType === 'default/foldr' && !this.items[key].children === undefined) {
-          this.items[key].children = []
-        }
-      }
-    });
-    const filePath = this.path;
-    const pathParts = filePath.split('/')
-    filePath.split('/').forEach((item, index) => {
-      if (index === 0) item = 'ROOT'
-      const newPath = pathParts.slice(0, index + 1).join('/') || '';
-      console.log(newPath);
-      this.keepOpen.push(newPath)
-    });
+    // this.asyncData = [
+    //   this.$refs.folderTree.initializeLoading()
+    // ]
+    // this.$refs.folderTree.handleAsyncLoad(this.asyncData, this.$refs.folderTree)
   },
-  // watch: {
-  //   open: 'keepOpen'
-  // },
   methods: {
-    // keepOpen() {
-    //   console.log('call keepOpen');
-    //   for (const key in this.keepOpen) {
-    //     if (!(this.keepOpen[key] in this.open)) {
-    //       this.open.push(this.keepOpen[key]);
-    //     }
-    //   }
-    // },
-    async fetchItems(item) {
-      console.log('load tree children for', item.path);
-      return files.getItems(item.path).then(itemData => {
-        console.log('success load children data', item.path);
-        for (const key in itemData.children) {
-          if (itemData.children[key].mimeType !== 'default/foldr') continue;
-          console.log('children foldr', key, 'path is', itemData.children[key].path);
-          item.children.push(itemData.children[key])
-        }
-        if (!item.children || item.children.length === 0) {
-          item.children = undefined;
-        }
-      }).catch(err => console.warn(err));
+    itemDbClick(node, item, event) {
+      console.debug('call itemDbClick from item', node, item, event);
+      if (item && !item.loading && item.children.length > 0) item.opened = !item.opened;
     },
+    itemClick(node, item, event) {
+      console.debug('call itemClick from item', node, item, event);
+      if (item && item.path && item.path !== this.path) router.push({path: `/files${item.path}`});
+    },
+    loadData(oriNode, resolve) {
+      console.debug('loadData', oriNode);
+      const item = oriNode.data;
+      const path = item.path || '/';
+      console.debug('load tree data for path', path, 'from item', item);
+      files.getItems(path).then(items => {
+        console.debug('  load tree data success', path, items);
+        const newItems = [];
+        for (const key in items.children) {
+          if (items.children[key].mimeType === 'default/foldr') {
+            const newItem = {
+              name: items.children[key].name,
+              path: items.children[key].path,
+            };
+            console.debug(' load tree children', key, 'data', newItem);
+            newItems.push(newItem);
+          }
+        }
+        resolve(newItems)
+      }).catch(console.warn);
+    }
   },
 }
 </script>
 
 <style scoped>
+.type-icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  fill: currentColor;
+  overflow: hidden;
+}
 
+.tree-default {
+  padding-left: 12px;
+}
+</style>
+
+<style>
+.folder-tree .tree-children {
+  padding-left: 0;
+}
 </style>

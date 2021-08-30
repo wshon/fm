@@ -17,9 +17,9 @@
 </template>
 
 <script>
-import files from "../apis/files";
-import router from "../router";
-import typeMap from "../utils/typeMap";
+import files from "@/apis/files";
+import router from "@/router";
+import typeMap from "@/utils/typeMap";
 
 export default {
   name: "FileTable",
@@ -44,22 +44,22 @@ export default {
   },
   methods: {
     getType(item) {
-      if (item.mimeType in typeMap) {
-        return typeMap[item.mimeType]
+      if (item.mimeType in typeMap.mimeType) {
+        return typeMap.mimeType[item.mimeType]
       }
       const ext = item.name.substring(item.name.lastIndexOf("."));
-      if (ext in typeMap) {
-        return typeMap[ext]
+      if (ext in typeMap.ext) {
+        return typeMap.ext[ext]
       }
-      if (typeMap['*']) {
-        return typeMap['*'];
+      if (typeMap.default) {
+        return typeMap.default;
       }
       return 'file'
     },
     itemAction(item) {
       switch (item.mimeType) {
         case 'default/foldr':
-          router.push({path: `/files${item.path}`});
+          if (item.path && this.path !== item.path) files.getItems(item.path).then(() => router.push({path: `/files${item.path}`}));
           break;
         default:
           window.open(item.download, '_self');
@@ -69,8 +69,8 @@ export default {
     fetchData() {
       let path = this.path;
       if (path.substr(0, 1) !== '/') path = '/' + path
-      console.log('get items for path', path);
-      files.getItems(path).then((items) => {
+      console.debug('load table data for path', path);
+      files.getItems(path).then(items => {
         switch (items.mimeType) {
           case 'default/foldr':
             this.tableData = items.children;
@@ -80,9 +80,7 @@ export default {
           default:
             break;
         }
-      }).catch((error) => {
-        console.log(error);
-      })
+      }).catch(console.warn);
     }
   }
 }
